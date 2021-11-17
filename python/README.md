@@ -1,0 +1,1 @@
+This directory contains a sample AWS Lambda function written in Python. The function uses the [psycopg2](https://www.psycopg.org/) driver to connect to a running CockroachDB cluster.

@@ -1,0 +1,1 @@
+This repository contains sample [AWS Lambda](https://aws.amazon.com/lambda/) functions that connect to [CockroachDB](https://www.cockroachlabs.com/).
