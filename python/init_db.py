@@ -11,6 +11,7 @@ from psycopg2.errors import OperationalError
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 def create_accounts(conn, num):
     with conn.cursor() as cur:
         cur.execute(
@@ -32,7 +33,8 @@ def lambda_handler(event, context):
     register_uuid()
 
     try:
-        conn = psycopg2.connect(os.path.expandvars(os.environ['DATABASE_URL']))
+        conn = psycopg2.connect(
+            os.environ['DATABASE_URL'].replace('$HOME/.postgresql/', ''))
     except OperationalError as err:
         logger.error("Could not connect to CockroachDB.")
         logger.error(err)
