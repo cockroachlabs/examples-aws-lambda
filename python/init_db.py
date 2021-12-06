@@ -34,7 +34,7 @@ def lambda_handler(event, context):
 
     try:
         conn = psycopg2.connect(
-            os.environ['DATABASE_URL'].replace('$HOME/.postgresql/', ''))
+            os.environ['DATABASE_URL'].replace('$HOME/.postgresql/', ''))  # replace default cert path with local cert path
     except OperationalError as err:
         logger.error("Could not connect to CockroachDB.")
         logger.error(err)
