@@ -1,22 +1,35 @@
 const { Pool } = require('pg')
 
-let client
 let pool
 
-const initTable = async (client) => {
+const initTable = async (p) => {
+  const client = await p.connect()
   console.log('Initializing table...')
-  const tableInitialized = await client.query('CREATE TABLE IF NOT EXISTS accounts (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), balance INT8)')
-  console.log(tableInitialized)
+  try {
+    const tableInitialized = await client.query('CREATE TABLE IF NOT EXISTS accounts (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), balance INT8)')
+    console.log(tableInitialized)
+  } catch (err) {
+    console.log(err.stack)
+  } finally {
+    client.release()
+  }
 }
 
-const insertAccounts = async (client) => {
+const insertAccounts = async (p) => {
+  const client = await p.connect()
   console.log('Inserting new rows into the accounts table...')
   const balanceValue = [Math.floor(Math.random() * 1000)]
-  const accountsInserted = await client.query('INSERT INTO accounts (id, balance) VALUES (DEFAULT, $1)', balanceValue)
-  console.log(accountsInserted)
+  try {
+    const accountsInserted = await client.query('INSERT INTO accounts (id, balance) VALUES (DEFAULT, $1)', balanceValue)
+    console.log(accountsInserted)
+  } catch (err) {
+    console.log(err.stack)
+  } finally {
+    client.release()
+  }
 }
 
-exports.handler = async (event, context) => {
+exports.handler = async (context) => {
   if (!pool) {
     const connectionString = process.env.DATABASE_URL
     pool = new Pool({
@@ -25,8 +38,7 @@ exports.handler = async (event, context) => {
       min: 0
     })
   }
-  if (!client) { client = await pool.connect() }
 
-  await initTable(client)
-  await insertAccounts(client)
+  await initTable(pool)
+  await insertAccounts(pool)
 }
