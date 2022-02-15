@@ -43,7 +43,7 @@ exports.handler = async (context) => {
     pool = new Pool({
       connectionString,
       max: 1,
-      min: 0
+      maxLifetimeSeconds = 1800
     })
   }
 
