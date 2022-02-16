@@ -1,48 +1,38 @@
 import os
-import sys
 import logging
-import uuid
 import random
 from math import floor
-import psycopg2
-from psycopg2.extras import register_uuid
-from psycopg2.errors import OperationalError
+from psycopg2.pool import SimpleConnectionPool
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+pool = None
 
-def create_accounts(conn, num):
+
+def create_accounts(p, n):
+    conn = p.getconn()
     with conn.cursor() as cur:
         cur.execute(
-            "CREATE TABLE IF NOT EXISTS accounts (id UUID PRIMARY KEY, balance INT8)")
-        while num > 0:
-            account_id = uuid.uuid4()
+            "CREATE TABLE IF NOT EXISTS accounts (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), balance INT8)")
+        conn.commit()
+        while n > 0:
             account_balance = floor(random.random()*1_000_000)
-            cur.execute("UPSERT INTO accounts (id, balance) VALUES (%s, %s)", [
-                        account_id, account_balance])
+            cur.execute("UPSERT INTO accounts (id, balance) VALUES (DEFAULT, %s)", [
+                        account_balance])
             logger.info(
-                f"Created new account with id {account_id} and balance {account_balance}.")
-            num -= 1
+                f"Created new account with balance {account_balance}.")
+            n -= 1
         logger.debug(f"create_accounts(): status message: {cur.statusmessage}")
-    conn.commit()
+        conn.commit()
 
 
 def lambda_handler(event, context):
+    global pool
+    if not pool:
+        pool = SimpleConnectionPool(0, 1, dsn=os.environ['DATABASE_URL'])
 
-    register_uuid()
-
-    try:
-        conn = psycopg2.connect(
-            os.environ['DATABASE_URL'].replace('$HOME/.postgresql/', ''))  # replace default cert path with local cert path
-    except OperationalError as err:
-        logger.error("Could not connect to CockroachDB.")
-        logger.error(err)
-        sys.exit()
-
-    logger.info("Hey! You successfully connected to your CockroachDB cluster.")
-
-    create_accounts(conn, 5)
+    create_accounts(pool, 5)
 
     logger.info("Database initialized.")
 
