@@ -6,13 +6,12 @@ const initTable = async (p) => {
   const client = await p.connect()
   console.log('Initializing table...')
   try {
-    const tableInitialized = await client.query(
+    await client.query(
       `CREATE TABLE IF NOT EXISTS accounts (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           balance INT8
         )`
     )
-    console.log(tableInitialized)
   } catch (err) {
     console.log(err.stack)
   } finally {
@@ -20,16 +19,18 @@ const initTable = async (p) => {
   }
 }
 
-const insertAccounts = async (p) => {
+const insertAccounts = async (p, n) => {
   const client = await p.connect()
-  console.log('Inserting new rows into the accounts table...')
-  const balanceValue = [Math.floor(Math.random() * 1000)]
+  console.log('Hey! You successfully connected to your CockroachDB cluster.')
   try {
-    const accountsInserted = await client.query(
-      'INSERT INTO accounts (id, balance) VALUES (DEFAULT, $1)',
-      balanceValue
-    )
-    console.log(accountsInserted)
+    while (n > 0) {
+      const balanceValue = [Math.floor(Math.random() * 1000)]
+      await client.query('INSERT INTO accounts (id, balance) VALUES (DEFAULT, $1)',
+        balanceValue
+      )
+      n -= 1
+      console.log(`Created new account with balance ${balanceValue}.`)
+    }
   } catch (err) {
     console.log(err.stack)
   } finally {
@@ -42,11 +43,12 @@ exports.handler = async (context) => {
     const connectionString = process.env.DATABASE_URL
     pool = new Pool({
       connectionString,
-      max: 1,
-      maxLifetimeSeconds = 1800
+      max: 1
     })
   }
 
   await initTable(pool)
-  await insertAccounts(pool)
+  await insertAccounts(pool, 5)
+
+  console.log('Database initialized.')
 }
