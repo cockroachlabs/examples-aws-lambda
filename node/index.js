@@ -44,6 +44,7 @@ exports.handler = async (context) => {
     const connectionString = process.env.DATABASE_URL;
     pool = new Pool({
       connectionString,
+      application_name: "$ docs_lambda_node",
       max: 1,
     });
   }

@@ -30,7 +30,7 @@ def create_accounts(p, n):
 def lambda_handler(event, context):
     global pool
     if not pool:
-        pool = SimpleConnectionPool(0, 1, dsn=os.environ['DATABASE_URL'])
+        pool = SimpleConnectionPool(0, 1, dsn=os.environ['DATABASE_URL'], application_name="$ docs_lambda_python")
 
     create_accounts(pool, 5)
 
